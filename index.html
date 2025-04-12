@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chatbot Simple</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    #chatbox {
+      width: 100%;
+      max-width: 600px;
+      height: 400px;
+      background: white;
+      border-radius: 10px;
+      padding: 10px;
+      overflow-y: auto;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      margin-bottom: 10px;
+    }
+
+    .message {
+      margin: 8px 0;
+    }
+
+    .user {
+      text-align: right;
+      color: blue;
+    }
+
+    .bot {
+      text-align: left;
+      color: green;
+    }
+
+    #inputArea {
+      display: flex;
+      width: 100%;
+      max-width: 600px;
+    }
+
+    #userInput {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px 0 0 5px;
+    }
+
+    #sendBtn {
+      padding: 10px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 0 5px 5px 0;
+    }
+
+    #sendBtn:hover {
+      background: #45a049;
+    }
+  </style>
+</head>
+<body>
+  <h2>Chatbot évolutif 🤖</h2>
+  <div id="chatbox"></div>
+  <div id="inputArea">
+    <input type="text" id="userInput" placeholder="Écris quelque chose..." />
+    <button id="sendBtn">Envoyer</button>
+  </div>
+
+  <script>
+    const chatbox = document.getElementById("chatbox");
+    const userInput = document.getElementById("userInput");
+    const sendBtn = document.getElementById("sendBtn");
+
+    // Chargement de la base de connaissances
+    let knowledge = JSON.parse(localStorage.getItem("chatbot_knowledge")) || {};
+
+    function saveKnowledge() {
+      localStorage.setItem("chatbot_knowledge", JSON.stringify(knowledge));
+    }
+
+    function addMessage(text, sender) {
+      const message = document.createElement("div");
+      message.className = `message ${sender}`;
+      message.textContent = text;
+      chatbox.appendChild(message);
+      chatbox.scrollTop = chatbox.scrollHeight;
+    }
+
+    function handleLearning(input) {
+      // Format attendu : apprends : "question" = "réponse"
+      const regex = /^apprends\s*:\s*"(.*)"\s*=\s*"(.*)"$/i;
+      const match = input.match(regex);
+      if (match) {
+        const question = match[1].toLowerCase().trim();
+        const response = match[2].trim();
+        knowledge[question] = response;
+        saveKnowledge();
+        return `D'accord ! Si tu me dis "${question}", je répondrai "${response}" 😊`;
+      }
+      return null;
+    }
+
+    function getBotResponse(input) {
+      input = input.toLowerCase().trim();
+      if (input in knowledge) {
+        return knowledge[input];
+      }
+      return "Je ne sais pas encore quoi répondre à ça. Tu peux m'apprendre avec : apprends : \"ta question\" = \"ta réponse\"";
+    }
+
+    function sendMessage() {
+      const input = userInput.value.trim();
+      if (input === "") return;
+
+      addMessage(input, "user");
+
+      const learned = handleLearning(input);
+      const response = learned || getBotResponse(input);
+
+      setTimeout(() => addMessage(response, "bot"), 400);
+
+      userInput.value = "";
+    }
+
+    sendBtn.addEventListener("click", sendMessage);
+    userInput.addEventListener("keypress", function(e) {
+      if (e.key === "Enter") sendMessage();
+    })
+    const responses = {
+      "salut": "Salut toi ! Comment ça va ?",
+      "ça va": "Je vais toujours bien, merci de demander 😊",
+      "comment tu t'appelles": "Je suis un petit bot sans nom... mais tu peux m'en donner un si tu veux !",
+      "tu fais quoi": "Je papote avec toi 😄",
+      "merci": "Avec plaisir !",
+      "au revoir": "À la prochaine 👋",
+      "je m'ennuie": "Tu veux une blague ? 😄 Pourquoi les poissons détestent l’ordinateur ? Parce qu’ils ont peur du net !",
+      "quelle heure": "Je suis un bot, je n'ai pas de montre, mais regarde en haut à droite de ton écran 😛",
+    };
+
+    function getBotResponse(input) {
+      input = input.toLowerCase();
+      for (let key in responses) {
+        if (input.includes(key)) {
+          return responses[key];
+        }
+      }
+      return "Hmm... je ne sais pas trop quoi répondre à ça 😅";
+    }
+
+    function addMessage(text, sender) {
+      const message = document.createElement("div");
+      message.className = `message ${sender}`;
+      message.textContent = text;
+      chatbox.appendChild(message);
+      chatbox.scrollTop = chatbox.scrollHeight;
+    }
+
+    function sendMessage() {
+      const input = userInput.value.trim();
+      if (input === "") return;
+
+      addMessage(input, "user");
+      const response = getBotResponse(input);
+      setTimeout(() => addMessage(response, "bot"), 500);
+
+      userInput.value = "";
+    }
+    const responsePatterns = [
+    {
+      keywords: ["salut", "bonjour", "coucou"],
+      responses: [
+        "Salut toi !",
+        "Hey, content de te voir !",
+        "Bonjour ! Comment tu vas ?"
+      ]
+    },
+    {
+      keywords: ["ça va", "tu vas bien", "comment tu vas"],
+      responses: [
+        "Je vais super bien, et toi ?",
+        "Toujours au top quand je te parle 😄",
+        "Je suis juste un bot, mais j’apprécie la question !"
+      ]
+    },
+    {
+      keywords: ["triste", "pas bien", "mal", "déprimé"],
+      responses: [
+        "Oh non 😢 tu veux en parler ?",
+        "Je suis là pour toi. Tu n’es pas seul·e.",
+        "Tu veux que je te raconte une blague ?"
+      ]
+    },
+    {
+      keywords: ["blague", "rigole", "marrant"],
+      responses: [
+        "Pourquoi les canards sont toujours à l'heure ? Parce qu’ils sont dans l’étang (le temps) 😂",
+        "Que fait une fraise sur un cheval ? Tagada tagada 🍓🐴",
+        "Tu veux une autre ? 😁"
+      ]
+    },
+    {
+      keywords: ["aide", "question", "peux-tu", "comment faire"],
+      responses: [
+        "Pose ta question, je vais essayer de t'aider !",
+        "Je fais de mon mieux pour t'expliquer 😊",
+        "Vas-y, je t'écoute."
+      ]
+    },
+    {
+      keywords: ["merci", "thanks"],
+      responses: [
+        "Avec plaisir ! 😊",
+        "Y'a pas de quoi !",
+        "Toujours là pour toi 💪"
+      ]
+    },
+    {
+      keywords: ["au revoir", "bye", "ciao"],
+      responses: [
+        "À la prochaine 👋",
+        "Bye bye !",
+        "Reviens quand tu veux !"
+      ]
+    },
+    {
+      keywords: ["je m'ennuie", "rien à faire", "je sais pas quoi faire"],
+      responses: [
+        "Tu veux que je te propose une activité ?",
+        "Et si tu écrivais une histoire, ou que tu dessinais quelque chose ?",
+        "Tu veux un petit défi ? 😏"
+      ]
+    }
+  ];
+  
+  function getBotResponse(input) {
+    input = input.toLowerCase();
+  
+    for (let pattern of responsePatterns) {
+      for (let keyword of pattern.keywords) {
+        if (input.includes(keyword)) {
+          const responses = pattern.responses;
+          return responses[Math.floor(Math.random() * responses.length)];
+        }
+      }
+    }
+  
+    // Réponse par défaut si rien ne correspond
+    return "Je comprends pas encore bien ça... essaie de me dire autrement 😅";
+  }
+
+    sendBtn.addEventListener("click", sendMessage);
+    userInput.addEventListener("keypress", function(e) {
+      if (e.key === "Enter") sendMessage();
+    });
+  </script>
+</body>
+</html>
